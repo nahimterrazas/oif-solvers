@@ -1,6 +1,9 @@
 [submodule "utils/lib/the-compact"]
 	path = utils/lib/the-compact
 	url = https://github.com/Uniswap/the-compact
+[submodule "lib/forge-std"]
+	path = lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
 [submodule "utils/lib/forge-std/forge-std"]
 	path = utils/lib/forge-std/forge-std
 	url = https://github.com/foundry-rs/forge-std
