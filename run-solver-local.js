@@ -2,8 +2,8 @@
 // run-solver-local.js - Start the OIF Protocol Solver for local testing
 // Reads configuration from config/chains-local.json
 
-const { OIFProtocolSolver } = require('./dist/src/index');
-const { ConfigLoader } = require('./dist/src/config/ConfigLoader');
+const { OIFProtocolSolver } = require('./dist/index');
+const { ConfigLoader } = require('./dist/config/ConfigLoader');
 const path = require('path');
 
 // Custom OIFProtocolSolver that uses configuration file
@@ -24,7 +24,7 @@ class ConfiguredOIFProtocolSolver extends OIFProtocolSolver {
     console.log('🏗️  Configuring ContractFactory with chains and contracts...');
     
     // Configure the ContractFactory with our configuration
-    const { ContractFactory } = require('./dist/src/contracts/ContractFactory');
+    const { ContractFactory } = require('./dist/contracts/ContractFactory');
     ConfigLoader.configureContractFactory(this.contractFactory, this.chainsConfig);
     
     console.log('✅ ContractFactory configured successfully!');
