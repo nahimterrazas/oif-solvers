@@ -213,7 +213,7 @@ echo "🔍 Step 4: Setting nonce..."
 # 1. Get the correct allocator address from getLockDetails(tokenId)  
 # 2. Check hasConsumedAllocatorNonce(nonce, allocator) to find available nonce
 # 3. Use timestamp-based or other collision-resistant nonce strategy
-NONCE=2
+NONCE=5
 echo "  📋 Using hardcoded nonce: $NONCE"
 echo "  ⚠️  NOTE: This is hardcoded for testing. In production, check if nonce is consumed first."
 
@@ -267,7 +267,7 @@ export SIGNATURE_RECIPIENT=$RECIPIENT_BYTES32
 export SIGNATURE_DOMAIN_SEPARATOR=$DOMAIN_SEPARATOR
 
 # Run the signature generation script with RPC URL for contract calls
-SIGNATURE_OUTPUT=$(forge script script/GenerateSignature.s.sol --rpc-url $ORIGIN_RPC 2>/dev/null)
+SIGNATURE_OUTPUT=$(forge script utils/script/GenerateSignature.s.sol:GenerateSignature --root utils --rpc-url $ORIGIN_RPC -vv)
 SIGNATURE=$(echo "$SIGNATURE_OUTPUT" | grep "0x" | tail -1 | tr -d '[:space:]')
 
 # Verify we got a valid signature format

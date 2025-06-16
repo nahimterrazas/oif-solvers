@@ -1,0 +1,26 @@
+# utils/foundry.toml
+
+[profile.default]
+# Where your Solidity code lives
+src = "src"
+# Where your scripts for forge scripting live
+script = "script"
+# Output directory
+out = "out"
+
+# Libraries to include from lib/
+libs = [
+  "lib/forge-std",
+  "lib/the-compact",
+  
+]
+
+# Remappings for correct import resolution
+remappings = [
+  "forge-std/=lib/forge-std/src/",
+  "the-compact/=lib/the-compact/src/"
+]
+
+optimizer = true
+optimizer_runs = 200
+viaIR = true 

@@ -44,6 +44,17 @@ export interface OrderStatusResponse {
   error?: string;
 }
 
+export interface FinalizeOrderRequest {
+  orderId: string;
+}
+
+export interface FinalizeOrderResponse {
+  success: boolean;
+  orderId: string;
+  message: string;
+  finalizedAt?: Date;
+}
+
 /**
  * Simplified API Server for OIF Protocol Solver
  * Focuses on order submission and status endpoints
@@ -124,6 +135,9 @@ export class SolverServer {
     // Get queue state
     router.get('/queue', this.getQueueState.bind(this));
 
+    // Finalize order - Execute finalization on origin chain
+    router.post('/orders/:orderId/finalize', this.finalizeOrder.bind(this));
+
     this.app.use('/api/v1', router);
 
     // Root endpoint
@@ -135,9 +149,8 @@ export class SolverServer {
           health: 'GET /api/v1/health',
           submitOrder: 'POST /api/v1/orders',
           orderStatus: 'GET /api/v1/orders/:orderId',
-          queue: 'GET /api/v1/queue',
-          sponsorSignature: 'POST /api/v1/signatures/sponsor-signature',
-          completeOrder: 'POST /api/v1/signatures/complete-order'
+          finalizeOrder: 'POST /api/v1/orders/:orderId/finalize',
+          queue: 'GET /api/v1/queue'
         }
       });
     });
@@ -274,12 +287,12 @@ export class SolverServer {
   }
 
   /**
-   * Process order asynchronously (Step2 + Step3 equivalent)
-   * This replaces the manual Step2/Step3 script execution
+   * Process order asynchronously (Step2 equivalent)
+   * This replaces the manual Step2 script execution and only handles the fill
    */
   private async processOrderAsync(orderId: string, order: StandardOrder): Promise<void> {
     try {
-      console.log(`🔄 Starting processing for order ${orderId}`);
+      console.log(`🔄 Starting fill processing for order ${orderId}`);
 
       // Update status to processing
       this.orderStorage.updateOrderStatus(orderId, 'processing');
@@ -291,21 +304,8 @@ export class SolverServer {
       const fillResult = await this.crossChainService.executeFill(orderId, order);
 
       if (fillResult.success) {
-        console.log(`✅ Fill successful for order ${orderId}`);
-
-        // Step 3 equivalent: Execute finalization on origin chain
-        console.log(`⛓️  Executing finalization for order ${orderId}...`);
-        
-        // Use the new FinalizationService API - it will retrieve the stored order with signature
-        const finalizeResult = await this.finalizationService.finalizeOrder(orderId);
-
-        if (finalizeResult.success) {
-          console.log(`🎉 Order ${orderId} completed successfully!`);
-          this.orderStorage.updateOrderStatus(orderId, 'filled');
-        } else {
-          console.error(`❌ Finalization failed for order ${orderId}`);
-          this.orderStorage.updateOrderStatus(orderId, 'failed');
-        }
+        console.log(`✅ Fill successful for order ${orderId} - ready for finalization`);
+        this.orderStorage.updateOrderStatus(orderId, 'filled');
       } else {
         console.error(`❌ Fill failed for order ${orderId}`);
         this.orderStorage.updateOrderStatus(orderId, 'failed');
@@ -346,15 +346,100 @@ export class SolverServer {
   }
 
   /**
+   * Finalize order endpoint (Step3 equivalent)
+   * Execute finalization on origin chain for a filled order
+   */
+  private async finalizeOrder(req: Request, res: Response): Promise<void> {
+    try {
+      const { orderId } = req.params;
+
+      if (!orderId) {
+        res.status(400).json({
+          success: false,
+          error: 'Order ID is required'
+        });
+        return;
+      }
+
+      // Check if order exists and is in 'filled' status
+      const storedOrder = this.orderStorage.getOrder(orderId);
+      if (!storedOrder) {
+        res.status(404).json({
+          success: false,
+          orderId,
+          message: 'Order not found'
+        });
+        return;
+      }
+
+      if (storedOrder.status !== 'filled') {
+        res.status(400).json({
+          success: false,
+          orderId,
+          message: `Order must be in 'filled' status to finalize. Current status: ${storedOrder.status}`
+        });
+        return;
+      }
+
+      console.log(`⛓️  Executing finalization for order ${orderId}...`);
+
+      // Step 3 equivalent: Execute finalization on origin chain
+      // Use the FinalizationService API - it will retrieve the stored order with signature
+      const finalizeResult = await this.finalizationService.finalizeOrder(orderId);
+
+      if (finalizeResult.success) {
+        console.log(`🎉 Order ${orderId} finalized successfully!`);
+        this.orderStorage.updateOrderStatus(orderId, 'finalized');
+
+        const response: FinalizeOrderResponse = {
+          success: true,
+          orderId,
+          message: 'Order finalized successfully',
+          finalizedAt: new Date()
+        };
+
+        res.status(200).json(response);
+      } else {
+        console.error(`❌ Finalization failed for order ${orderId}`);
+        this.orderStorage.updateOrderStatus(orderId, 'failed');
+
+        res.status(422).json({
+          success: false,
+          orderId,
+          message: 'Finalization failed'
+        });
+      }
+
+    } catch (error) {
+      console.error(`❌ Error finalizing order ${req.params.orderId}:`, error);
+      
+      // Update order status to failed if possible
+      if (req.params.orderId) {
+        this.orderStorage.updateOrderStatus(req.params.orderId, 'failed');
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: (error as Error).message
+      });
+    }
+  }
+
+  /**
    * Get queue state endpoint
    */
   private async getQueueState(req: Request, res: Response): Promise<void> {
     try {
+      const stats = this.orderStorage.getStats();
       res.json({
-        pending: 0,
-        processing: 0,
-        completed: 0,
-        failed: 0
+        pending: stats.pending,
+        processing: stats.processing,
+        filled: stats.filled,
+        finalized: stats.finalized,
+        failed: stats.failed,
+        expired: stats.expired,
+        totalOrders: stats.totalOrders
       });
     } catch (error) {
       console.error('Error getting queue state:', error);

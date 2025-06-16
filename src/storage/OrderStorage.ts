@@ -8,7 +8,7 @@ export interface StoredOrder {
   order: StandardOrder;
   signature: string;
   timestamp: number;
-  status: 'pending' | 'processing' | 'filled' | 'expired' | 'failed';
+  status: 'pending' | 'processing' | 'filled' | 'finalized' | 'expired' | 'failed';
   metadata?: {
     source?: string;
     clientId?: string;
@@ -120,6 +120,7 @@ export class OrderStorage {
     pending: number;
     processing: number;
     filled: number;
+    finalized: number;
     failed: number;
     expired: number;
   } {
@@ -129,6 +130,7 @@ export class OrderStorage {
       pending: orders.filter(o => o.status === 'pending').length,
       processing: orders.filter(o => o.status === 'processing').length,
       filled: orders.filter(o => o.status === 'filled').length,
+      finalized: orders.filter(o => o.status === 'finalized').length,
       failed: orders.filter(o => o.status === 'failed').length,
       expired: orders.filter(o => o.status === 'expired').length
     };

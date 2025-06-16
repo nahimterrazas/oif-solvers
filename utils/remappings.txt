@@ -1,0 +1,2 @@
+the-compact/=lib/the-compact/
+forge-std/=lib/forge-std/forge-std/src/
