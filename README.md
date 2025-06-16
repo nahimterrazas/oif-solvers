@@ -110,12 +110,6 @@ By default, the solver uses **Anvil Account #0** which has 10,000 ETH on both ch
 - **Address**: `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`
 - **Private Key**: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
 
-### Check Which Wallet Will Be Used
-```bash
-cd solver
-node check-wallet.js
-```
-
 ### Configuration Options
 
 **Option 1: Config File (Recommended)**
@@ -138,94 +132,9 @@ export SOLVER_PRIVATE_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae7
 export SOLVER_ADDRESS="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 ```
 
-## 📋 Configuration System
-
-The solver reads all settings from `config/chains-local.json`:
-
-### Test Configuration
-```bash
-cd solver
-node test-config-loader.js
-```
-
-### Configuration Structure
-```json
-{
-  "environment": "local",
-  "chains": {
-    "origin": {
-      "chainId": 31337,
-      "rpcUrl": "http://127.0.0.1:8545",
-      "contracts": { "SettlerCompact": "...", "TheCompact": "..." }
-    },
-    "destination": {
-      "chainId": 31338, 
-      "rpcUrl": "http://127.0.0.1:8546",
-      "contracts": { "CoinFiller": "..." }
-    }
-  },
-  "solver": {
-    "wallet": { "address": "...", "privateKey": "..." },
-    "api": { "port": 3000, "host": "localhost" },
-    "gas": { "maxGasPrice": "100000000000", "gasMultiplier": 1.2 },
-    "validation": { "enableSignatureValidation": false }
-  }
-}
-```
-
-## 🔄 How It Works
-
-
-### New Solver Workflow:
-1. **HTTP POST** to `/api/v1/orders` → Solver receives order
-2. **Automatic Processing**:
-   - Validates order
-   - **Solver wallet signs** fill transaction on destination chain
-   - **Solver wallet signs** finalize transaction on origin chain
-3. **Get Results** via `/api/v1/queue` or order ID endpoint
-
-## 🧪 Testing Commands
-
-### Useful Scripts
-```bash
-# Test configuration loading
-node test-config-loader.js
-
-# Check which wallet will be used
-node check-wallet.js
-
-# Start solver locally
-npm run start:local
-```
-
-### Check Wallet Balances
-```bash
-# Origin chain balance
-curl -X POST http://127.0.0.1:8545 \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","latest"],"id":1}'
-
-# Destination chain balance  
-curl -X POST http://127.0.0.1:8546 \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266","latest"],"id":1}'
-```
-
-## 🔧 For Production
-
-**⚠️ IMPORTANT**: For real networks (testnet/mainnet):
-
-1. **Generate New Private Key**: `openssl rand -hex 32`
-2. **Update Configuration**: Use real chain IDs and RPC URLs
-3. **Enable Validation**: Set `enableSignatureValidation: true`
-4. **Fund Wallet**: Send ETH to solver address on both chains
-5. **Update Contract Addresses**: Use your deployed contract addresses
-
 ## 📚 Documentation
 
-- **Complete Guide**: `LOCAL_TESTING.md`
 - **Configuration**: `config/chains-local.json`
-- **Scripts**: `test-config-loader.js`, `check-wallet.js`
 
 ## 🏗️ Development
 
