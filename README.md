@@ -89,6 +89,20 @@ npm run clean            # Remove dist/ directory
 └── LICENSE                     MIT license
 ```
 
+## 🔧 Solidity Workspace Setup
+
+This repository contains a standalone Forge (Foundry) project under the `utils/` directory, used for local testing of the solver (signature generation and end-to-end workflow):
+
+- The Solidity code, scripts, libraries, and build artifacts live in `utils/`.
+- To work with the contracts, `cd utils` and run `forge` commands there.
+- All remappings, optimizer settings (`optimizer`, `optimizer_runs`, `viaIR`), and project config are in `utils/foundry.toml`.
+- You can safely remove the root-level `remappings.txt` files and `lib/` directory if you never build from the repo root.
+- Add `utils/out/` to `.gitignore` to ignore build artifacts:
+
+  ```gitignore
+  utils/out/
+  ```
+
 ## 🏗️ How It Works
 
 1. **Receive Order**: HTTP POST to `/api/v1/orders` with `{"order": StandardOrder, "signature": string}`.
@@ -96,6 +110,10 @@ npm run clean            # Remove dist/ directory
 3. **Fill**: CrossChainService executes the fill transaction on the destination chain.
 4. **Finalize**: FinalizationService executes the finalize transaction on the origin chain.
 5. **Monitor**: Check order status with `GET /api/v1/orders/:orderId` or `GET /api/v1/queue`.
+
+## 🖼️ End-to-End Workflow Diagram
+
+![OIF Protocol Solver Workflow](diagram.jpg)
 
 ## 🔑 Wallet Configuration
 
