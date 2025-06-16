@@ -97,6 +97,10 @@ npm run clean            # Remove dist/ directory
 4. **Finalize**: FinalizationService executes the finalize transaction on the origin chain.
 5. **Monitor**: Check order status with `GET /api/v1/orders/:orderId` or `GET /api/v1/queue`.
 
+## 🖼️ End-to-End Workflow Diagram
+
+![OIF Protocol Solver Workflow](diagram.jpg)
+
 ## 🔑 Wallet Configuration
 
 **The solver uses a wallet to sign transactions** when filling orders (Step2) and finalizing them (Step3).
